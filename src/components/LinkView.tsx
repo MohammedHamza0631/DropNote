@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, ExternalLink, HelpCircle, Copy, Check } from 'lucide-react';
+import { Clock, ExternalLink, HelpCircle, Copy, Check, Home, InfinityIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { LinkDump, LinkItem } from '../lib/supabase';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface LinkViewProps {
   slug: string;
+  onBackToHome: () => void;
 }
 
-export function LinkView({ slug }: LinkViewProps) {
+export function LinkView({ slug, onBackToHome }: LinkViewProps) {
   const [dump, setDump] = useState<LinkDump | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [isPermanent, setIsPermanent] = useState(false);
 
   useEffect(() => {
     const fetchDump = async () => {
@@ -27,13 +30,18 @@ export function LinkView({ slug }: LinkViewProps) {
       }
 
       setDump(data);
+      
+      // Check if it's a permanent link
+      if (data.expires_at === null) {
+        setIsPermanent(true);
+      }
     };
 
     fetchDump();
   }, [slug]);
 
   useEffect(() => {
-    if (!dump) return;
+    if (!dump || isPermanent) return;
 
     const updateTimer = () => {
       const now = new Date().getTime();
@@ -53,7 +61,7 @@ export function LinkView({ slug }: LinkViewProps) {
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [dump]);
+  }, [dump, isPermanent]);
 
   const getFaviconUrl = (url: string): string => {
     try {
@@ -108,20 +116,30 @@ export function LinkView({ slug }: LinkViewProps) {
       else fontSize = 'text-base';
       
       return (
-        <div key={index} className={`${headerClass} ${fontSize} px-4 pt-3 pb-1`}>
+        <motion.div 
+          key={index} 
+          className={`${headerClass} ${fontSize} px-4 pt-3 pb-1`}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
+        >
           {headerContent}
-        </div>
+        </motion.div>
       );
     }
     
     // It's a link
     return (
-      <a
+      <motion.a
         key={index}
         href={item.url}
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center gap-3 p-4 hover:bg-light-700 dark:hover:bg-dark-700 transition-colors"
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05 }}
+        whileHover={{ scale: 1.01 }}
       >
         {item.url && getFaviconUrl(item.url) ? (
           <img
@@ -133,7 +151,7 @@ export function LinkView({ slug }: LinkViewProps) {
           <HelpCircle size={24} className="text-gray-400 flex-shrink-0" />
         )}
         <div className="flex-1 overflow-hidden">
-          <span className="text-blue-600 dark:text-blue-400 block truncate">
+          <span className="text-purple-600 dark:text-purple-400 block truncate">
             {item.title || (item.url && getTruncatedUrl(item.url)) || ''}
           </span>
           {!item.title && item.url && (
@@ -143,53 +161,109 @@ export function LinkView({ slug }: LinkViewProps) {
           )}
         </div>
         <ExternalLink size={16} className="text-gray-400 flex-shrink-0" />
-      </a>
+      </motion.a>
     );
   };
 
   if (error) {
     return (
-      <div className="w-full max-w-2xl p-8 bg-red-50 dark:bg-red-900/20 rounded-lg text-center">
+      <motion.div 
+        className="w-full max-w-2xl p-8 bg-red-50 dark:bg-red-900/20 rounded-lg text-center flex flex-col items-center gap-4"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <p className="text-red-600 dark:text-red-400">{error}</p>
-      </div>
+        
+        <motion.button
+          onClick={onBackToHome}
+          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 text-white px-4 py-2 rounded-lg transition-colors"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Home size={18} />
+          <span>Go to Home</span>
+        </motion.button>
+      </motion.div>
     );
   }
 
   if (!dump) {
     return (
-      <div className="w-full max-w-2xl p-8 bg-light-800 dark:bg-dark-800 rounded-lg">
+      <motion.div 
+        className="w-full max-w-2xl p-8 bg-light-800 dark:bg-dark-800 rounded-lg"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
         <div className="animate-pulse space-y-4">
           <div className="h-4 bg-light-700 dark:bg-dark-700 rounded w-3/4"></div>
           <div className="h-4 bg-light-700 dark:bg-dark-700 rounded"></div>
           <div className="h-4 bg-light-700 dark:bg-dark-700 rounded"></div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="w-full max-w-2xl space-y-4">
-      <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
-        <Clock size={20} />
-        <span>This link will expire in {timeLeft}</span>
-      </div>
+    <motion.div 
+      className="w-full max-w-2xl space-y-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.div 
+        className={`flex items-center gap-2 p-3 rounded-lg ${
+          isPermanent 
+            ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20'
+            : 'text-yellow-800 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/20'
+        }`}
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      >
+        {isPermanent ? (
+          <>
+            <InfinityIcon size={20} />
+            <span>Permanent link - never expires</span>
+          </>
+        ) : (
+          <>
+            <Clock size={20} />
+            <span>This link will expire in {timeLeft}</span>
+          </>
+        )}
+      </motion.div>
 
-      <div className="flex items-center gap-2 bg-light-800 dark:bg-dark-800 p-4 rounded-lg">
+      <motion.div 
+        className="flex items-center gap-2 bg-light-800 dark:bg-dark-800 p-4 rounded-lg"
+        initial={{ y: -10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.1 }}
+      >
         <div className="flex-1 font-mono text-sm text-gray-600 dark:text-gray-400 truncate">
           {window.location.href}
         </div>
-        <button
+        <motion.button
           onClick={handleCopyLink}
-          className="flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-lg transition-colors"
+          className="flex items-center gap-2 bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-400 px-3 py-1.5 rounded-lg transition-colors"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           {copied ? <Check size={16} /> : <Copy size={16} />}
           <span>{copied ? 'Copied!' : 'Copy Link'}</span>
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
       
-      <div className="bg-light-800 dark:bg-dark-800 rounded-lg divide-y divide-gray-200 dark:divide-gray-700">
-        {dump.links.map((item, index) => renderLinkItem(item, index))}
-      </div>
-    </div>
+      <motion.div 
+        className="bg-light-800 dark:bg-dark-800 rounded-lg divide-y divide-gray-200 dark:divide-gray-700 overflow-hidden"
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        <AnimatePresence>
+          {dump.links.map((item, index) => renderLinkItem(item, index))}
+        </AnimatePresence>
+      </motion.div>
+    </motion.div>
   );
 }
