@@ -68,7 +68,7 @@ function App() {
             onClick={goToHome}
           >
             <LinkIcon className="text-purple-600 dark:text-purple-400" size={24} />
-            <h1 className="text-xl font-bold">🧾 Link Dump</h1>
+            <h1 className="text-xl font-bold">🧾 Text Dump</h1>
           </motion.div>
           <div className="flex gap-2">
             {activeSlug && (

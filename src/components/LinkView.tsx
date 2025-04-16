@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, ExternalLink, HelpCircle, Copy, Check, Home, InfinityIcon } from 'lucide-react';
+import { Clock, ExternalLink, HelpCircle, Copy, Check, Home, InfinityIcon, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { LinkDump, LinkItem } from '../lib/supabase';
 import { motion, AnimatePresence } from 'motion/react';
@@ -15,6 +15,7 @@ export function LinkView({ slug, onBackToHome }: LinkViewProps) {
   const [error, setError] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [isPermanent, setIsPermanent] = useState(false);
+  const [textContent, setTextContent] = useState<string>('');
 
   useEffect(() => {
     const fetchDump = async () => {
@@ -35,6 +36,14 @@ export function LinkView({ slug, onBackToHome }: LinkViewProps) {
       if (data.expires_at === null) {
         setIsPermanent(true);
       }
+
+      // Combine all text content into one string
+      const combinedText = data.links
+        .filter((item: LinkItem) => item.type === 'text')
+        .map((item: LinkItem) => item.textContent)
+        .join('\n\n');
+      
+      setTextContent(combinedText);
     };
 
     fetchDump();
@@ -45,6 +54,9 @@ export function LinkView({ slug, onBackToHome }: LinkViewProps) {
 
     const updateTimer = () => {
       const now = new Date().getTime();
+      // Skip if expires_at is null (permanent link)
+      if (!dump.expires_at) return;
+      
       const expires = new Date(dump.expires_at).getTime();
       const diff = expires - now;
 
@@ -99,7 +111,7 @@ export function LinkView({ slug, onBackToHome }: LinkViewProps) {
     }
   };
   
-  // Render a single link item based on its type
+  // Render only headers and links, text content is shown separately
   const renderLinkItem = (item: LinkItem, index: number) => {
     if (item.type === 'header') {
       // Get header level by counting # symbols
@@ -107,7 +119,7 @@ export function LinkView({ slug, onBackToHome }: LinkViewProps) {
       const headerContent = item.content?.replace(/^#+\s+/, '') || '';
       
       // Apply different styles based on header level
-      let headerClass = 'text-gray-900 dark:text-gray-100 font-bold py-2';
+      const headerClass = 'text-gray-900 dark:text-gray-100 font-bold py-2';
       let fontSize = 'text-lg';
       
       if (headerLevel === 1) fontSize = 'text-2xl';
@@ -126,6 +138,11 @@ export function LinkView({ slug, onBackToHome }: LinkViewProps) {
           {headerContent}
         </motion.div>
       );
+    }
+    
+    // Skip rendering text items as they're combined
+    if (item.type === 'text') {
+      return null;
     }
     
     // It's a link
@@ -215,7 +232,7 @@ export function LinkView({ slug, onBackToHome }: LinkViewProps) {
         className={`flex items-center gap-2 p-3 rounded-lg ${
           isPermanent 
             ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20'
-            : 'text-yellow-800 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/20'
+            : 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20'
         }`}
         initial={{ y: -20 }}
         animate={{ y: 0 }}
@@ -253,6 +270,23 @@ export function LinkView({ slug, onBackToHome }: LinkViewProps) {
           <span>{copied ? 'Copied!' : 'Copy Link'}</span>
         </motion.button>
       </motion.div>
+      
+      {/* Display single text box if there's text content */}
+      {textContent && (
+        <motion.div
+          className="bg-light-800 dark:bg-dark-800 rounded-lg p-4 overflow-hidden"
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <div className="flex items-start gap-3">
+            <FileText className="text-purple-500 flex-shrink-0 mt-1" size={18} />
+            <div className="w-full bg-light-700/30 dark:bg-dark-700/30 rounded-lg p-5 shadow-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words">
+              {textContent}
+            </div>
+          </div>
+        </motion.div>
+      )}
       
       <motion.div 
         className="bg-light-800 dark:bg-dark-800 rounded-lg divide-y divide-gray-200 dark:divide-gray-700 overflow-hidden"

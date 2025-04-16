@@ -8,14 +8,15 @@ export const supabase = createClient(
 export interface LinkItem {
   url?: string;
   title?: string;
-  type: 'link' | 'header';
+  type: 'link' | 'header' | 'text';
   content?: string;
+  textContent?: string; // For storing plain text content
 }
 
 export interface LinkDump {
   id: string;
   slug: string;
   links: Array<LinkItem>;
-  expires_at: string;
+  expires_at: string | null;
   created_at: string;
 }
