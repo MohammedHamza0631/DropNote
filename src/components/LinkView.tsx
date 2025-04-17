@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, ExternalLink, HelpCircle, Copy, Check, Home, InfinityIcon, FileText } from 'lucide-react';
+import { Clock, ExternalLink, HelpCircle, Copy, Check, Home, InfinityIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { LinkDump, LinkItem } from '../lib/supabase';
 import { motion, AnimatePresence } from 'motion/react';
@@ -279,8 +279,7 @@ export function LinkView({ slug, onBackToHome }: LinkViewProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
         >
-          <div className="flex items-start gap-3">
-            <FileText className="text-purple-500 flex-shrink-0 mt-1" size={18} />
+          <div className="flex items-start gap-2">
             <div className="w-full bg-light-700/30 dark:bg-dark-700/30 rounded-lg p-5 shadow-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words">
               {textContent}
             </div>
