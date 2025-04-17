@@ -17,7 +17,7 @@ type ExpiryOption = {
 const EXPIRY_OPTIONS: ExpiryOption[] = [
   { label: '1 min', value: 1},
   { label: '5 min', value: 5},
-  { label: '10 minutes', value: 10 },
+  { label: '10 min', value: 10 },
   { label: '1 hour', value: 60 },
   { label: '1 day', value: 24 * 60 },
   { label: '1 week', value: 7 * 24 * 60 },
